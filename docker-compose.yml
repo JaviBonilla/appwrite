@@ -7,6 +7,8 @@ version: "3"
 
 services:
   traefik:
+    logging:
+      driver: none
     image: traefik:2.3
     container_name: appwrite-traefik
     command:
