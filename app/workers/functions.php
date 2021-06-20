@@ -418,6 +418,10 @@ class FunctionsV1 extends Worker
             $cpus = App::getEnv('_APP_FUNCTIONS_CPUS', '');
             $memory = App::getEnv('_APP_FUNCTIONS_MEMORY', '');
             $swap = App::getEnv('_APP_FUNCTIONS_MEMORY_SWAP', '');
+            var_dump($tagPathTargetDir);
+            var_dump($tagPathTarget);
+            var_dump($tagPath);
+            
             $exitCode = Console::execute("docker run ".
                 " -d".
                 " --entrypoint=\"\"".
