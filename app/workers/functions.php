@@ -431,7 +431,7 @@ class FunctionsV1 extends Worker
                 " --workdir /usr/local/src".
                 " ".\implode(" ", $vars).
                 " {$runtime['image']}".
-                " sh -c 'mv /tmp/code.tar.gz /usr/local/src/code.tar.gz && tar -zxf /usr/local/src/code.tar.gz --strip 1 && rm /usr/local/src/code.tar.gz && tail -f /dev/null'"
+                " sh -c 'mv /tmp/code.tar.gz /usr/local/src/code.tar.gz && tar -zxf /usr/local/src/code.tar.gz --strip 1 && rm /usr/local/src/code.tar.gz && node master.js'"
             , '', $stdout, $stderr, 30);
 
             $executionEnd = \microtime(true);
