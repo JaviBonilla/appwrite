@@ -418,10 +418,6 @@ class FunctionsV1 extends Worker
             $cpus = App::getEnv('_APP_FUNCTIONS_CPUS', '');
             $memory = App::getEnv('_APP_FUNCTIONS_MEMORY', '');
             $swap = App::getEnv('_APP_FUNCTIONS_MEMORY_SWAP', '');
-            var_dump($tagPathTargetDir);
-            var_dump($tagPathTarget);
-            var_dump($tagPath);
-            
             $exitCode = Console::execute("docker run ".
                 " -d".
                 " --entrypoint=\"\"".
@@ -435,7 +431,7 @@ class FunctionsV1 extends Worker
                 " --workdir /usr/local/src".
                 " ".\implode(" ", $vars).
                 " {$runtime['image']}".
-                " sh -c 'mv /tmp/code.tar.gz /usr/local/src/code.tar.gz && tar -zxf /usr/local/src/code.tar.gz --strip 1 && node master.js'"
+                " sh -c 'mv /tmp/code.tar.gz /usr/local/src/code.tar.gz && tar -zxf /usr/local/src/code.tar.gz && rm /usr/local/src/code.tar.gz && node master.js'"
             , '', $stdout, $stderr, 30);
 
             $executionEnd = \microtime(true);
