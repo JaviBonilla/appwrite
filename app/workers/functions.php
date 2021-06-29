@@ -476,8 +476,8 @@ class FunctionsV1 extends Worker
             'tagId' => $tag->getId(),
             'status' => $functionStatus,
             'exitCode' => $exitCode,
-            'stdout' => \mb_substr($stdout, -4000), // log last 4000 chars output
-            'stderr' => \mb_substr($stderr, -4000), // log last 4000 chars output
+            'stdout' => $stdout,
+            'stderr' => $stderr,
             'time' => $executionTime,
         ]));
         
