@@ -10,6 +10,10 @@
   - Add Anonymous Account Placeholder
 - Upgraded telegraf docker image version to v1.1.0
 - Added support for custom runtimes using \_APP_FUNCTIONS_CUSTOM_RUNTIMES environment variable
+- Upgraded telegraf docker image version to v1.2.0
+- Added new environment variables to the `telegraf` service:
+  - \_APP_INFLUXDB_HOST
+  - \_APP_INFLUXDB_PORT
 
 ## Bugs
 

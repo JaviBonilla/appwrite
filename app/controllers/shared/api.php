@@ -113,7 +113,6 @@ App::init(function ($utopia, $request, $response, $project, $user, $register, $e
 
 }, ['utopia', 'request', 'response', 'project', 'user', 'register', 'events', 'audits', 'usage', 'deletes'], 'api');
 
-
 App::init(function ($utopia, $request, $response, $project, $user) {
     /** @var Utopia\App $utopia */
     /** @var Utopia\Swoole\Request $request */
@@ -168,7 +167,7 @@ App::init(function ($utopia, $request, $response, $project, $user) {
 
 }, ['utopia', 'request', 'response', 'project', 'user'], 'auth');
 
-App::shutdown(function ($utopia, $request, $response, $project, $events, $audits, $usage, $deletes, $mode) {
+App::shutdown(function ($utopia, $request, $response, $project, $events, $audits, $usage, $deletes, $realtime, $mode) {
     /** @var Utopia\App $utopia */
     /** @var Utopia\Swoole\Request $request */
     /** @var Appwrite\Utopia\Response $response */
@@ -177,6 +176,7 @@ App::shutdown(function ($utopia, $request, $response, $project, $events, $audits
     /** @var Appwrite\Event\Event $audits */
     /** @var Appwrite\Event\Event $usage */
     /** @var Appwrite\Event\Event $deletes */
+    /** @var Appwrite\Event\Realtime $realtime */
     /** @var Appwrite\Event\Event $functions */
     /** @var bool $mode */
 
@@ -197,6 +197,14 @@ App::shutdown(function ($utopia, $request, $response, $project, $events, $audits
             ->setQueue('v1-functions')
             ->setClass('FunctionsV1')
             ->trigger();
+
+        if ($project->getId() !== 'console') {
+            $realtime
+                ->setEvent($events->getParam('event'))
+                ->setProject($project->getId())
+                ->setPayload($response->getPayload())
+                ->trigger();
+        }
     }
     
     if (!empty($audits->getParam('event'))) {
@@ -220,4 +228,4 @@ App::shutdown(function ($utopia, $request, $response, $project, $events, $audits
         ;
     }
 
-}, ['utopia', 'request', 'response', 'project', 'events', 'audits', 'usage', 'deletes', 'mode'], 'api');
+}, ['utopia', 'request', 'response', 'project', 'events', 'audits', 'usage', 'deletes', 'realtime', 'mode'], 'api');

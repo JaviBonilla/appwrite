@@ -11,6 +11,12 @@ if (\file_exists(__DIR__.'/../vendor/autoload.php')) {
     require_once __DIR__.'/../vendor/autoload.php';
 }
 
+ini_set('memory_limit','512M');
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+ini_set('default_socket_timeout', -1);
+error_reporting(E_ALL);
+
 use Ahc\Jwt\JWT;
 use Ahc\Jwt\JWTException;
 use Appwrite\Auth\Auth;
@@ -18,9 +24,11 @@ use Appwrite\Database\Database;
 use Appwrite\Database\Adapter\MySQL as MySQLAdapter;
 use Appwrite\Database\Adapter\Redis as RedisAdapter;
 use Appwrite\Database\Document;
+use Appwrite\Database\Pool\PDOPool;
+use Appwrite\Database\Pool\RedisPool;
 use Appwrite\Database\Validator\Authorization;
 use Appwrite\Event\Event;
-use Appwrite\Extend\PDO;
+use Appwrite\Event\Realtime;
 use Appwrite\OpenSSL\OpenSSL;
 use Utopia\App;
 use Utopia\View;
@@ -29,7 +37,6 @@ use Utopia\Locale\Locale;
 use Utopia\Registry\Registry;
 use MaxMind\Db\Reader;
 use PHPMailer\PHPMailer\PHPMailer;
-use PDO as PDONative;
 
 const APP_NAME = 'Appwrite';
 const APP_DOMAIN = 'appwrite.io';
@@ -145,23 +152,30 @@ Database::addFilter('encrypt',
 /*
  * Registry
  */
-$register->set('db', function () { // Register DB connection
+$register->set('dbPool', function () { // Register DB connection
     $dbHost = App::getEnv('_APP_DB_HOST', '');
     $dbUser = App::getEnv('_APP_DB_USER', '');
     $dbPass = App::getEnv('_APP_DB_PASS', '');
     $dbScheme = App::getEnv('_APP_DB_SCHEMA', '');
+    $pool = new PDOPool(10, $dbHost, $dbScheme, $dbUser, $dbPass);
 
-    $pdo = new PDO("mysql:host={$dbHost};dbname={$dbScheme};charset=utf8mb4", $dbUser, $dbPass, array(
-        PDONative::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4',
-        PDONative::ATTR_TIMEOUT => 3, // Seconds
-        PDONative::ATTR_PERSISTENT => true
-    ));
+    return $pool;
+});
 
-    // Connection settings
-    $pdo->setAttribute(PDONative::ATTR_DEFAULT_FETCH_MODE, PDONative::FETCH_ASSOC);   // Return arrays
-    $pdo->setAttribute(PDONative::ATTR_ERRMODE, PDONative::ERRMODE_EXCEPTION);        // Handle all errors with exceptions
+$register->set('redisPool', function () {
+    $user = App::getEnv('_APP_REDIS_USER', '');
+    $pass = App::getEnv('_APP_REDIS_PASS', '');
+    $auth = [];
+    if ($user) {
+        $auth[] = $user;
+    }
+    if ($pass) {
+        $auth[] = $pass;
+    }
 
-    return $pdo;
+    $pool = new RedisPool(10, App::getEnv('_APP_REDIS_HOST', ''), App::getEnv('_APP_REDIS_PORT', ''), $auth);
+
+    return $pool;
 });
 $register->set('influxdb', function () { // Register DB connection
     $host = App::getEnv('_APP_INFLUXDB_HOST', '');
@@ -184,25 +198,6 @@ $register->set('statsd', function () { // Register DB connection
     $statsd = new \Domnikl\Statsd\Client($connection);
 
     return $statsd;
-});
-$register->set('cache', function () { // Register cache connection
-    $redis = new Redis();
-    $redis->pconnect(App::getEnv('_APP_REDIS_HOST', ''), App::getEnv('_APP_REDIS_PORT', ''));
-    $user = App::getEnv('_APP_REDIS_USER','');
-    $pass = App::getEnv('_APP_REDIS_PASS','');
-    $auth = [];
-    if(!empty($user)) {
-        $auth["user"] = $user;
-    }
-    if(!empty($pass)) {
-        $auth["pass"] = $pass;
-    }
-    if(!empty($auth)) {
-        $redis->auth($auth);
-    }
-    $redis->setOption(Redis::OPT_READ_TIMEOUT, -1);
-
-    return $redis;
 });
 $register->set('smtp', function () {
     $mail = new PHPMailer(true);
@@ -329,6 +324,10 @@ App::setResource('events', function($register) {
     return new Event('', '');
 }, ['register']);
 
+App::setResource('realtime', function($register) {
+    return new Realtime('', '', []);
+}, ['register']);
+
 App::setResource('audits', function($register) {
     return new Event(Event::AUDITS_QUEUE_NAME, Event::AUDITS_CLASS_NAME);
 }, ['register']);
@@ -387,7 +386,7 @@ App::setResource('user', function($mode, $project, $console, $request, $response
     /** @var Appwrite\Database\Document $project */
     /** @var Appwrite\Database\Database $consoleDB */
     /** @var Appwrite\Database\Database $projectDB */
-    /** @var bool $mode */
+    /** @var string $mode */
 
     Authorization::setDefaultStatus(true);
 
@@ -402,10 +401,10 @@ App::setResource('user', function($mode, $project, $console, $request, $response
             $request->getCookie(Auth::$cookieName.'_legacy', '')));// Get fallback session from old clients (no SameSite support)
 
     // Get fallback session from clients who block 3rd-party cookies
-    $response->addHeader('X-Debug-Fallback', 'false');
+    if($response) $response->addHeader('X-Debug-Fallback', 'false');
 
     if(empty($session['id']) && empty($session['secret'])) {
-        $response->addHeader('X-Debug-Fallback', 'true');
+        if($response) $response->addHeader('X-Debug-Fallback', 'true');
         $fallback = $request->getHeader('x-fallback-cookies', '');
         $fallback = \json_decode($fallback, true);
         $session = Auth::decodeSession(((isset($fallback[Auth::$cookieName])) ? $fallback[Auth::$cookieName] : ''));
@@ -419,7 +418,7 @@ App::setResource('user', function($mode, $project, $console, $request, $response
     }
     else {
         $user = $consoleDB->getDocument(Auth::$unique);
-
+        
         $user
             ->setAttribute('$id', 'admin-'.$user->getAttribute('$id'))
         ;
@@ -434,7 +433,8 @@ App::setResource('user', function($mode, $project, $console, $request, $response
     if (APP_MODE_ADMIN === $mode) {
         if (!empty($user->search('teamId', $project->getAttribute('teamId'), $user->getAttribute('memberships')))) {
             Authorization::setDefaultStatus(false);  // Cancel security segmentation for admin users.
-        } else {
+        }
+        else {
             $user = new Document(['$id' => '', '$collection' => Database::SYSTEM_COLLECTION_USERS]);
         }
     }
