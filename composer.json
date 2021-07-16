@@ -24,7 +24,11 @@
         {
             "type": "git",
             "url": "https://github.com/Meldiron/php-runtimes.git"
-        }
+        },
+        {
+            "type": "git",
+            "url": "https://github.com/utopia-php/websocket.git"
+        }        
     ],
     "require": {
         "php": ">=8.0.0",
@@ -75,12 +79,6 @@
         "phpunit/phpunit": "9.5.6",
         "vimeo/psalm": "4.7.2"
     },
-    "repositories": [
-        {
-            "type": "git",
-            "url": "https://github.com/utopia-php/websocket.git"
-        }
-    ],
     "provide": {
         "ext-phpiredis": "*"
     },
