@@ -14,29 +14,29 @@ body:
     validations:
       required: true
     attributes:
-      label: "Reproduction steps"
+      label: "👟 Reproduction steps"
       description: "How do you trigger this bug? Please walk us through it step by step."
-      value: "When I ..."
+      placeholder: "When I ..."
   - type: textarea
     id: expected-behavior
     validations:
       required: true
     attributes:
-      label: "Expected behavior"
+      label: "👍 Expected behavior"
       description: "What did you think would happen?"
-      value: "Appwrite should ..."
+      placeholder: "Appwrite should ..."
   - type: textarea
     id: actual-behavior
     validations:
       required: true
     attributes:
-      label: "Actual Behavior"
+      label: "👎 Actual Behavior"
       description: "What did actually happen? Add screenshots, if applicable."
-      value: "Appwrite ..."
+      placeholder: "Appwrite ..."
   - type: dropdown
     id: appwrite-version
     attributes:
-      label: "Appwrite version"
+      label: "🎲 Appwrite version"
       description: "What version of Appwrite are you running?"
       options:
         - Version 0.9.4
@@ -55,7 +55,7 @@ body:
   - type: dropdown
     id: operating-system
     attributes:
-      label: "Operating system"
+      label: "💻 Operating system"
       description: "What OS is your server / device running on?"
       options:
         - Linux
@@ -69,15 +69,15 @@ body:
     validations:
       required: false
     attributes:
-      label: "Your Environment"
+      label: "🧱 Your Environment"
       description: "Is your environment special in any way?"
-      value: "I use Cloudflare for ..."
+      placeholder: "I use Cloudflare for ..."
   - type: checkboxes
     id: no-duplicate-issues
     validations:
       required: true
     attributes:
-      label: "Have you spent some time to check if this issue has been raised before?"
+      label: "👀 Have you spent some time to check if this issue has been raised before?"
       description: "Have you Googled for a similar issue or checked our older issues for a similar bug?"
       options:
         - label: "I checked and didn't find similar issue"
