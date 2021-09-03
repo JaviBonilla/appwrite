@@ -74,7 +74,7 @@ body:
       placeholder: "I use Cloudflare for ..."
   - type: checkboxes
     id: no-duplicate-issues
-    validations:
+    options:
       required: true
     attributes:
       label: "👀 Have you spent some time to check if this issue has been raised before?"
